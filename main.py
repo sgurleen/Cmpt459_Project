@@ -6,8 +6,8 @@ import pandas as pd
 
 def main():
     # Read the training and test datasets
-    train_path = "train/train.csv"
-    test_path = "test/test.csv"
+    train_path = "D:/SFU/year4_sem2/cmpt459/Project/Cmpt459_Project/train/train.csv"
+    test_path = "D:/SFU/year4_sem2/cmpt459/Project/Cmpt459_Project/test/test.csv"
 
     train_data, test_data = utils.read_data(train_path, test_path)
 
@@ -40,8 +40,20 @@ def main():
     # Dropping NaN values in Credit Mix
     train_data = train_data.dropna(subset=['Credit_Mix'])
     
-    
+    #Make histograms
+    numerical_columns = train_data.select_dtypes(include=[np.number]).columns.tolist()
+    categorical_columns = train_data.select_dtypes(include=['object', 'category']).columns.tolist()
 
-    print(train_data.shape)
+    # # Plot histograms and show them
+    # train.feature_histograms(train_data, numerical_columns, categorical_columns)
+    
+    # ## Plot boxplors
+    # log_transformed_data = utils.apply_transformation(train_data, numerical_columns)
+    # train.plot_feature_boxplots(log_transformed_data, numerical_columns)
+    
+    ## heatmaps
+    train.plot_correlation_heatmap(train_data)
+
+    #print(train_data.shape)
 
 main()
