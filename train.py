@@ -152,7 +152,7 @@ def feature_histograms(data, numerical_columns, categorical_columns):
     print("Histograms and bar plots have been displayed.")
     
 ##Boxplots 
-def plot_feature_boxplots(data, numerical_columns):
+def plot_feature_boxplots(data, numerical_columns, categorical_columns):
     
     sns.set_style("whitegrid")
     
@@ -163,11 +163,11 @@ def plot_feature_boxplots(data, numerical_columns):
         plt.title(f'Boxplot of {col}', fontsize=14)
         plt.xlabel('')
         plt.ylabel(col, fontsize=12)
-        plt.show()  
-
+        plt.show() 
+    
 ##Heatmaps
         
-def plot_correlation_heatmap(data, threshold=0.55):
+def plot_correlation_heatmap(data, threshold=0.1):
     """
     Plots a heatmap showing only strong correlations above a certain threshold.
 

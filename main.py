@@ -47,11 +47,11 @@ def main():
     # # Plot histograms and show them
     # train.feature_histograms(train_data, numerical_columns, categorical_columns)
     
-    # ## Plot boxplors
-    # log_transformed_data = utils.apply_transformation(train_data, numerical_columns)
-    # train.plot_feature_boxplots(log_transformed_data, numerical_columns)
+    ## Plot boxplors
+    #log_transformed_data = utils.apply_transformation(train_data, numerical_columns)
+    #train.plot_feature_boxplots(train_data, numerical_columns, categorical_columns)
     
-    ## heatmaps
+    # heatmaps
     train.plot_correlation_heatmap(train_data)
 
     #print(train_data.shape)
