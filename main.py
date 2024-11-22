@@ -8,8 +8,8 @@ from sklearn.compose import ColumnTransformer
 
 def main():
     # Read the training and test datasets
-    train_path = "train/train.csv"
-    test_path = "test/test.csv"
+    train_path = "D:/SFU/year4_sem2/cmpt459/Project/Cmpt459_Project/train/train.csv"
+    test_path = "D:/SFU/year4_sem2/cmpt459/Project/Cmpt459_Project/test/test.csv"
 
     train_data, test_data = utils.read_data(train_path, test_path)
 
@@ -83,7 +83,24 @@ def main():
 
     train.check_cluster_performance(X, labels_kmeans)
     
-    
+    #Make histograms
+    numerical_columns = train_data.select_dtypes(include=[np.number]).columns.tolist()
+    categorical_columns = train_data.select_dtypes(include=['object', 'category']).columns.tolist()
 
+<<<<<<< HEAD
     
+=======
+    # # Plot histograms and show them
+    # train.feature_histograms(train_data, numerical_columns, categorical_columns)
+    
+    ## Plot boxplors
+    #log_transformed_data = utils.apply_transformation(train_data, numerical_columns)
+    #train.plot_feature_boxplots(train_data, numerical_columns, categorical_columns)
+    
+    # heatmaps
+    train.plot_correlation_heatmap(train_data)
+
+    #print(train_data.shape)
+
+>>>>>>> 9a7e6cf30641a650343f5334d07c0e8f08bbb3b3
 main()
