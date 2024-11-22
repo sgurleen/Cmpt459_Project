@@ -3,6 +3,8 @@ from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.impute import SimpleImputer
 from sklearn.decomposition import PCA
 from sklearn.feature_selection import VarianceThreshold
+import matplotlib.pyplot as plt
+import seaborn as sns
 import numpy as np
 import re
 import utils
@@ -123,10 +125,85 @@ def handle_missing_values(data, numerical_features):
     # test_encoded = encoder.transform(test_data[categorical_columns])
 
 
+######################## EDA ##########################
 
+def feature_histograms(data, numerical_columns, categorical_columns):
+    
+    # Plot histograms for numerical features
+    for col in numerical_columns:
+        plt.figure(figsize=(10, 6))
+        sns.histplot(data=data, x=col, kde=True,bins='auto', log_scale=True) #we used log-log scale to plot histogram as data was skewed
+        plt.title(f'Histogram of {col}')
+        plt.xlabel(col)
+        plt.ylabel('Frequency')
+        plt.show()  # Display the plot
 
+    # Plot bar plots for categorical features
+    for col in categorical_columns:
+        plt.figure(figsize=(10, 6))
+        sns.countplot(data=data, x=col)
+        plt.title(f'Distribution of {col}')
+        plt.xlabel(col)
+        plt.ylabel('Count')
+        plt.xticks(rotation=45, ha='right')
+        plt.tight_layout()
+        plt.show()  # Display the plot
 
+    print("Histograms and bar plots have been displayed.")
+    
+##Boxplots 
+def plot_feature_boxplots(data, numerical_columns, categorical_columns):
+    
+    sns.set_style("whitegrid")
+    
+    # Loop through each numerical column and plot one boxplot at a time
+    for col in numerical_columns:
+        plt.figure(figsize=(7, 5))  # Create a new figure for each feature
+        sns.boxplot(y=data[col])
+        plt.title(f'Boxplot of {col}', fontsize=14)
+        plt.xlabel('')
+        plt.ylabel(col, fontsize=12)
+        plt.show() 
+    
+##Heatmaps
+        
+def plot_correlation_heatmap(data, threshold=0.1):
+    """
+    Plots a heatmap showing only strong correlations above a certain threshold.
 
+    Parameters:
+    - data (pd.DataFrame): The dataset with numerical features.
+    - threshold (float): Minimum absolute correlation value to include in the heatmap.
+    """
+    # Select numerical columns and compute correlation matrix
+    numerical_data = data.select_dtypes(include=[np.number])
+    correlation_matrix = numerical_data.corr()
 
+    # Filter correlations based on the threshold
+    strong_corr = correlation_matrix[
+        (correlation_matrix.abs() >= threshold) & (correlation_matrix != 1.0)
+    ]
 
+    # Drop rows and columns where all values are NaN
+    strong_corr = strong_corr.dropna(how='all', axis=0).dropna(how='all', axis=1)
 
+    # Check if the resulting matrix is empty
+    if strong_corr.empty:
+        print(f"No correlations above the threshold of {threshold}.")
+        return
+
+    # Plot the filtered heatmap
+    plt.figure(figsize=(10, 8))
+    sns.heatmap(
+        strong_corr, 
+        annot=True, 
+        fmt=".2f", 
+        cmap="coolwarm", 
+        cbar=True, 
+        square=True,
+        linewidths=0.5
+    )
+    plt.title(f"Filtered Correlation Heatmap (|correlation| >= {threshold})", fontsize=16)
+    plt.xticks(rotation=45, ha="right")
+    plt.yticks(rotation=0)
+    plt.show()
