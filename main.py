@@ -4,7 +4,8 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import RobustScaler, StandardScaler
 from sklearn.compose import ColumnTransformer
-
+import eval
+from sklearn.neighbors import KNeighborsClassifier
 
 def main():
     # Read the training and test datasets
@@ -13,22 +14,18 @@ def main():
 
     train_data, test_data = utils.read_data(train_path, test_path)
 
+
     ############ Data Cleaning ##################
 
     # Data has 8 rows for each customer ID for different months. 
     # Dropping Nan values lead to 50 per loss in information
     # Since the data has 8 rows for each customer, taking its mode 
     # and filling the NaN or garbage values
-    
 
-    # Cleaning the data as there are many numeric value with '_', e.g. 23_
     train_data = train.filter_numeric_data(train_data)
 
 
-
-
     ############### Data Preprocessing ##########################
-
 
     # After evaluation Credit_Mix needs label encoding
     train_data = train.label_encoding(train_data, 'Credit_Mix', 'Payment_of_Min_Amount')
@@ -45,10 +42,10 @@ def main():
     # Then apply one-hot 
     train_data = utils.split_and_duplicate_rows(train_data, 'Type_of_Loan')
     train_data = pd.get_dummies(train_data, columns=['Occupation'])
-    # train_data = train.one_hot_encode(train_data, ['Occupation'])
 
 
     # ######################## Clustering ######################
+
     # Removing features that will not be useful for model 
     train_data = train_data.drop(columns=['ID', 'Customer_ID', 'Name', 'SSN', 'Month', 'Type_of_Loan'])
 
@@ -60,7 +57,10 @@ def main():
     # Split between features and class labels
     y = train_data['Credit_Score']  # Extract the target variable
     X = train_data.drop(columns=['Credit_Score'])  # Drop the target variable to get the features
-    
+
+    credit_mapping = {"Poor": 0, "Standard": 1, "Good": 2}
+    y = y.map(credit_mapping)
+    # print(y.value_counts())
     robust_columns = ['Total_EMI_per_month', 'Amount_invested_monthly', 'Monthly_Balance']
 
     # Columns to apply StandardScaler (All columns except robust columns)
@@ -73,31 +73,71 @@ def main():
 
     # Apply to training data
     X = X.dropna()
-
-    X.to_csv("cleaned.csv")
+    print(X.shape)
     X = scaler.fit_transform(X)
 
-    # train.apply_dbscan(X)
-    # train.apply_pca(X)
-    labels_kmeans = train.apply_kmeans(X)
+    X_filtered = utils.pick_first_row_every_8(X)
 
-    train.check_cluster_performance(X, labels_kmeans)
+    # There are 3 class Good, Poor, and Standard
+    n_clusters = 3
+
+    cluster_labels, kmeans_model = train.apply_kmeans(X_filtered, n_clusters)
+    # cluster_labels = train.perform_dbscan(X_filtered, eps=8, min_samples=20)
     
-    #Make histograms
+    # Perform PCA for visualization
+    pca_data, pca_model = train.perform_pca(X_filtered, n_components=3)
+
+    # Plot PCA clusters
+    train.plot_pca_clusters_2D(pca_data, cluster_labels, n_clusters)
+    
+    # Evaluate silhouette score
+    silhouette = train.evaluate_silhouette_score(X_filtered, cluster_labels)
+    print(f"Silhouette Score: {silhouette:.2f}")
+ 
+    
+    ################### KNN Neighbors ##################################
+    
+    # X_train, X_test, y_train, y_test = utils.split_dataset(X, y)
+
+    # knn = KNeighborsClassifier(n_neighbors=20)
+
+    # ################### Cross-validation ##############################
+    # cv_scores = eval.perform_cross_validation(knn, X_train, y_train, cv=5)
+    # print("Cross-Validation Scores:", cv_scores)
+
+    # knn.fit(X_train, y_train)
+    # y_pred = knn.predict(X_test)
+    # y_proba = knn.predict_proba(X_test)
+
+    # metrics = eval.evaluate_model(y_test, y_pred, y_proba)
+    # print("Evaluation Metrics:", metrics)
+
+    # eval.plot_confusion_matrix(y_test, y_pred)
+    # if y_proba is not None:
+    #     eval.plot_multiclass_roc_curve(y_test, y_proba, ["Poor", "Standard", "Good"])
+
+    # ###################### Hyperparameter tuning ######################
+    # param_grid = {"n_neighbors": [10, 20, 50, 70, 100], "weights": ["uniform", "distance"]}
+    # grid_search = eval.perform_grid_search(knn, param_grid, X_train, y_train)
+    # print("Best Parameters:", grid_search.best_params_)
+
+    
+    ################################ EDA ################################
+    # Make histograms
     numerical_columns = train_data.select_dtypes(include=[np.number]).columns.tolist()
     categorical_columns = train_data.select_dtypes(include=['object', 'category']).columns.tolist()
 
     
-    # # Plot histograms and show them
+    # Plot histograms and show them
     # train.feature_histograms(train_data, numerical_columns, categorical_columns)
     
-    ## Plot boxplors
-    #log_transformed_data = utils.apply_transformation(train_data, numerical_columns)
-    #train.plot_feature_boxplots(train_data, numerical_columns, categorical_columns)
+    # Plot boxplors
+    # log_transformed_data = utils.apply_transformation(train_data, numerical_columns)
+    # train.plot_feature_boxplots(train_data, numerical_columns, categorical_columns)
     
     # heatmaps
-    train.plot_correlation_heatmap(train_data)
+    # train.plot_correlation_heatmap(train_data)
 
-    #print(train_data.shape)
+    
 
 main()

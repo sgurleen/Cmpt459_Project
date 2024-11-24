@@ -1,6 +1,7 @@
 import re
 import pandas as pd
 import numpy as np
+from sklearn.model_selection import train_test_split
 
 def convert_to_months(data, feature):
     
@@ -93,3 +94,30 @@ def apply_transformation(data, numerical_columns):
         else:
             print(f"Skipping column '{col}' as it contains non-positive values.")
     return log_transformed_data
+
+def pick_first_row_every_8(array):
+    """
+    Selects the first row from every group of 8 rows in a DataFrame.
+
+    Parameters:
+    df (pd.DataFrame): The input DataFrame.
+
+    Returns:
+    pd.DataFrame: A DataFrame with the first row from every group of 8 rows.
+    """
+    return array#[::8
+
+def split_dataset(X, y, test_size=0.2, random_state=42):
+    """
+    Splits the dataset into training and testing sets.
+
+    Parameters:
+    X (np.ndarray or pd.DataFrame): Features.
+    y (np.ndarray or pd.Series): Labels.
+    test_size (float): Proportion of the dataset to include in the test split.
+    random_state (int): Random seed for reproducibility.
+
+    Returns:
+    tuple: X_train, X_test, y_train, y_test
+    """
+    return train_test_split(X, y, test_size=test_size, random_state=random_state)

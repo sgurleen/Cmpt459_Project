@@ -13,6 +13,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from sklearn.metrics import silhouette_score
 from sklearn.cluster import KMeans
+from sklearn.manifold import TSNE
 
 ########## Data Preprocessing ##################
 def filter_numeric_data(data):
@@ -82,7 +83,6 @@ def filter_numeric_data(data):
     data['Monthly_Balance'] = data['Monthly_Balance'].astype(float)
     data = utils.forward_backward_filling(data, 'Monthly_Balance', 'Customer_ID')
 
-
     return data
 
 
@@ -115,7 +115,6 @@ def one_hot_encode(data, features):
         if feature not in data.columns:
             raise ValueError(f"Feature '{feature}' not found in DataFrame.")
 
-    # Perform one-hot encoding
     encoded_data = pd.get_dummies(data, columns=features, drop_first=False)
 
     return encoded_data
@@ -156,128 +155,78 @@ def handle_missing_values(data, numerical_features):
 
 
 ####################### Clustering ###########################
-def apply_dbscan(data, eps=0.5, min_samples=5):
-    """
-    Apply DBSCAN clustering on the given dataset and plot the resulting clusters.
+def apply_kmeans(data, n_clusters=5):
 
-    Parameters:
-    - data: pd.DataFrame or np.ndarray - The data to cluster (numeric only).
-    - eps: float - The maximum distance between two samples for them to be considered as in the same neighborhood.
-    - min_samples: int - The number of samples in a neighborhood for a point to be considered as a core point.
+    kmeans = KMeans(n_clusters, random_state=42)
+    labels = kmeans.fit_predict(data)
+    return labels, kmeans
 
-    Returns:
-    - pd.Series - Cluster labels for each data point.
-    """
-    # Instantiate DBSCAN with specified parameters
+def perform_dbscan(data, eps=6, min_samples=10):
     dbscan = DBSCAN(eps=eps, min_samples=min_samples)
-
-    # Fit DBSCAN to the data and predict cluster labels
     labels = dbscan.fit_predict(data)
+    return labels
 
-    # Return the labels as a Pandas Series for better interpretability
-    labels_series = pd.Series(labels, name='Cluster_Label')
+def plot_kmeans_clusters(data, labels, n_clusters):
 
-    # Plotting the clusters
-    plt.figure(figsize=(10, 6))
-    unique_labels = np.unique(labels)
-    palette = sns.color_palette("hsv", len(unique_labels))
-
-    for label, color in zip(unique_labels, palette):
-        if label == -1:
-            # Noise points are labeled as -1
-            color = 'k'
-            marker = 'x'
-        else:
-            marker = 'o'
-        
-        cluster_points = data[labels == label]
-        plt.scatter(cluster_points.iloc[:, 0], cluster_points.iloc[:, 1], c=[color], label=f'Cluster {label}' if label != -1 else 'Noise', marker=marker)
-
-    plt.title('DBSCAN Clustering Results')
-    plt.xlabel('Feature 1')
-    plt.ylabel('Feature 2')
+    plt.figure(figsize=(10, 7))
+    for i in range(n_clusters):
+        cluster_data = data[labels == i]
+        plt.scatter(cluster_data[:, 0], cluster_data[:, 2], label=f'Cluster {i}')
+    plt.title("KMeans Clustering")
+    plt.xlabel("Feature 1")
+    plt.ylabel("Feature 2")
     plt.legend()
-    plt.show()
+    plt.savefig('ClusterPlots/kmeans_plot.png')
 
-    return labels_series
+def perform_pca(data, n_components=3):
 
-def apply_kmeans(X, n_clusters=5, random_state=42):
-    """
-    Apply K-Means clustering to the given dataset.
-
-    Parameters:
-    - X: pd.DataFrame or np.ndarray - The data to cluster (numeric only).
-    - n_clusters: int - The number of clusters to form. Default is 3.
-    - random_state: int - Random seed for reproducibility.
-
-    Returns:
-    - pd.Series - Cluster labels for each data point.
-    """
-    # Instantiate the KMeans model with specified parameters
-    kmeans = KMeans(n_clusters=n_clusters, random_state=random_state)
-
-    # Fit the KMeans model to the data and predict the cluster labels
-    labels = kmeans.fit_predict(X)
-
-    # Return the labels as a Pandas Series for better interpretability
-    return pd.Series(labels, name='Cluster_Label')
-
-def apply_pca(data, n_components=2):
-    """
-    Apply PCA (Principal Component Analysis) to reduce the dimensionality of the dataset and plot the explained variance.
-
-    Parameters:
-    - data: pd.DataFrame or np.ndarray - The data to reduce (numeric only).
-    - n_components: int - The number of principal components to keep.
-
-    Returns:
-    - pd.DataFrame - Transformed data with the specified number of principal components.
-    """
-    # Instantiate PCA with the specified number of components
     pca = PCA(n_components=n_components)
+    reduced_data = pca.fit_transform(data)
+    return reduced_data, pca
 
-    # Fit and transform the data using PCA
-    pca_transformed = pca.fit_transform(data)
 
-    # Create a DataFrame with the transformed data
-    pca_columns = [f'PC{i+1}' for i in range(n_components)]
-    pca_df = pd.DataFrame(pca_transformed, columns=pca_columns)
+def plot_pca_clusters_2D(reduced_data, labels, n_clusters):
+    plt.figure(figsize=(10, 7))
+    
+    for i in range(n_clusters):
+        cluster_data = reduced_data[labels == i]
+        plt.scatter(cluster_data[:, 0], cluster_data[:, 1], label=f'Cluster {i}')
+    
+    plt.title("PCA Clustering Visualization (2D)")
+    plt.xlabel("Principal Component 1")
+    plt.ylabel("Principal Component 2")
+    plt.legend()
+    
+    plt.savefig('ClusterPlots/pca_clusters_2d_dbscan.png')
 
-    # Plotting the explained variance by each principal component
-    plt.figure(figsize=(10, 6))
-    plt.bar(range(1, n_components + 1), pca.explained_variance_ratio_ * 100, alpha=0.7, align='center')
-    plt.xlabel('Principal Component')
-    plt.ylabel('Percentage of Explained Variance')
-    plt.title('Explained Variance by Principal Components')
-    plt.xticks(range(1, n_components + 1))
-    plt.grid(axis='y', linestyle='--', alpha=0.6)
+
+def plot_pca_clusters_3D(reduced_data, labels, n_clusters):
+
+    fig = plt.figure(figsize=(10, 7))
+    ax = fig.add_subplot(111, projection='3d')
+    
+    for i in range(n_clusters):
+        cluster_data = reduced_data[labels == i]
+        ax.scatter(cluster_data[:, 0], cluster_data[:, 1], cluster_data[:, 2], label=f'Cluster {i}')
+    
+    ax.set_title("PCA Clustering Visualization (3D)")
+    ax.set_xlabel("Principal Component 1")
+    ax.set_ylabel("Principal Component 2")
+    ax.set_zlabel("Principal Component 3")
+    ax.legend()
+    
+    plt.savefig('ClusterPlots/pca_clusters_3d.png')
     plt.show()
 
-    return pca_df
 
+def perform_tsne(data, n_components=3, perplexity=30, random_state=42):
+    tsne = TSNE(n_components=n_components, perplexity=perplexity, random_state=random_state)
+    reduced_data = tsne.fit_transform(data)
+    return reduced_data
 
-def check_cluster_performance(data, labels):
-    """
-    Evaluate the clustering performance using silhouette score.
+def evaluate_silhouette_score(data, labels):
 
-    Parameters:
-    - data: pd.DataFrame or np.ndarray - The data used for clustering (numeric only).
-    - labels: pd.Series or np.ndarray - The cluster labels assigned by the clustering algorithm.
-
-    Returns:
-    - float - The silhouette score of the clustering, ranging from -1 to 1.
-    """
-    # Calculate the silhouette score
-    score = silhouette_score(data, labels)
-    
-    # Print the silhouette score
-    print(f'Silhouette Score: {score:.2f}')
-    
-    return score
-
-
-
-
+    return silhouette_score(data, labels)
 
 ######################## EDA ##########################
 
@@ -290,7 +239,7 @@ def feature_histograms(data, numerical_columns, categorical_columns):
         plt.title(f'Histogram of {col}')
         plt.xlabel(col)
         plt.ylabel('Frequency')
-        plt.show()  # Display the plot
+        plt.savefig(str(col) + '_histogram.png')  # Display the plot
 
     # Plot bar plots for categorical features
     for col in categorical_columns:
@@ -301,11 +250,11 @@ def feature_histograms(data, numerical_columns, categorical_columns):
         plt.ylabel('Count')
         plt.xticks(rotation=45, ha='right')
         plt.tight_layout()
-        plt.show()  # Display the plot
+        plt.show(str(col) + '_bar_plot.png')  # Display the plot
 
     print("Histograms and bar plots have been displayed.")
     
-##Boxplots 
+# Boxplots 
 def plot_feature_boxplots(data, numerical_columns, categorical_columns):
     
     sns.set_style("whitegrid")
@@ -317,18 +266,10 @@ def plot_feature_boxplots(data, numerical_columns, categorical_columns):
         plt.title(f'Boxplot of {col}', fontsize=14)
         plt.xlabel('')
         plt.ylabel(col, fontsize=12)
-        plt.show() 
+        plt.savefig(str(col) + '_box.png') 
     
-##Heatmaps
-        
+# Heatmaps       
 def plot_correlation_heatmap(data, threshold=0.1):
-    """
-    Plots a heatmap showing only strong correlations above a certain threshold.
-
-    Parameters:
-    - data (pd.DataFrame): The dataset with numerical features.
-    - threshold (float): Minimum absolute correlation value to include in the heatmap.
-    """
     # Select numerical columns and compute correlation matrix
     numerical_data = data.select_dtypes(include=[np.number])
     correlation_matrix = numerical_data.corr()
@@ -360,4 +301,4 @@ def plot_correlation_heatmap(data, threshold=0.1):
     plt.title(f"Filtered Correlation Heatmap (|correlation| >= {threshold})", fontsize=16)
     plt.xticks(rotation=45, ha="right")
     plt.yticks(rotation=0)
-    plt.show()
+    plt.savefig('heatmap.png')
