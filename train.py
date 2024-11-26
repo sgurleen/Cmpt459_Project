@@ -14,6 +14,9 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import silhouette_score
 from sklearn.cluster import KMeans
 from sklearn.manifold import TSNE
+from sklearn.cluster import AgglomerativeClustering
+import scipy.cluster.hierarchy as sch
+import itertools
 
 ########## Data Preprocessing ##################
 def filter_numeric_data(data):
@@ -161,22 +164,28 @@ def apply_kmeans(data, n_clusters=5):
     labels = kmeans.fit_predict(data)
     return labels, kmeans
 
-def perform_dbscan(data, eps=6, min_samples=10):
+def perform_dbscan(data, eps, min_samples):
     dbscan = DBSCAN(eps=eps, min_samples=min_samples)
     labels = dbscan.fit_predict(data)
     return labels
 
-def plot_kmeans_clusters(data, labels, n_clusters):
+def perform_hierarchical_clustering(data, n_clusters=2, linkage_method='ward', affinity='euclidean', plot_dendrogram=False):
+    # Optional: Plotting the Dendrogram
+    # if plot_dendrogram:
+    #     plt.figure(figsize=(10, 7))
+    #     dendrogram = sch.dendrogram(sch.linkage(data, method=linkage_method))
+    #     plt.title("Dendrogram")
+    #     plt.xlabel("Samples")
+    #     plt.ylabel("Distance")
+    #     plt.show()
 
-    plt.figure(figsize=(10, 7))
-    for i in range(n_clusters):
-        cluster_data = data[labels == i]
-        plt.scatter(cluster_data[:, 0], cluster_data[:, 2], label=f'Cluster {i}')
-    plt.title("KMeans Clustering")
-    plt.xlabel("Feature 1")
-    plt.ylabel("Feature 2")
-    plt.legend()
-    plt.savefig('ClusterPlots/kmeans_plot.png')
+    # Initialize the Agglomerative Clustering model
+    hierarchical_clustering = AgglomerativeClustering(n_clusters=n_clusters, metric=affinity, linkage=linkage_method)
+
+    # Fit the model to the data and predict cluster labels
+    labels = hierarchical_clustering.fit_predict(data)
+
+    return labels
 
 def perform_pca(data, n_components=3):
 
@@ -230,7 +239,7 @@ def evaluate_silhouette_score(data, labels):
 
 ######################## EDA ##########################
 
-def feature_histograms(data, numerical_columns, categorical_columns):
+def feature_histograms(data, numerical_columns):
     
     # Plot histograms for numerical features
     for col in numerical_columns:
@@ -239,23 +248,11 @@ def feature_histograms(data, numerical_columns, categorical_columns):
         plt.title(f'Histogram of {col}')
         plt.xlabel(col)
         plt.ylabel('Frequency')
-        plt.savefig(str(col) + '_histogram.png')  # Display the plot
-
-    # Plot bar plots for categorical features
-    for col in categorical_columns:
-        plt.figure(figsize=(10, 6))
-        sns.countplot(data=data, x=col)
-        plt.title(f'Distribution of {col}')
-        plt.xlabel(col)
-        plt.ylabel('Count')
-        plt.xticks(rotation=45, ha='right')
-        plt.tight_layout()
-        plt.show(str(col) + '_bar_plot.png')  # Display the plot
-
-    print("Histograms and bar plots have been displayed.")
+        plt.savefig('EDA/' + str(col) + '_histogram.png')  # Display the plot
+        plt.close() 
     
 # Boxplots 
-def plot_feature_boxplots(data, numerical_columns, categorical_columns):
+def plot_feature_boxplots(data, numerical_columns):
     
     sns.set_style("whitegrid")
     
@@ -266,8 +263,28 @@ def plot_feature_boxplots(data, numerical_columns, categorical_columns):
         plt.title(f'Boxplot of {col}', fontsize=14)
         plt.xlabel('')
         plt.ylabel(col, fontsize=12)
-        plt.savefig(str(col) + '_box.png') 
+        plt.savefig('EDA/' + str(col) + '_box.png') 
+        plt.close() 
+
+# Scatter Plots
+def scatter_plot_individual_features(data, numerical_columns):
     
+    sns.set_style("whitegrid")
+    
+    # Loop through each numerical column
+    for col in numerical_columns:
+        plt.figure(figsize=(7, 5))  # Create a new figure for each feature
+        
+        # Scatter plot of the feature (index vs feature values)
+        plt.scatter(data.index, data[col], alpha=0.6, c='blue', edgecolor='k')
+        
+        plt.title(f'Scatter Plot of {col}', fontsize=14)
+        plt.xlabel("Index", fontsize=12)
+        plt.ylabel(col, fontsize=12)
+ 
+        plt.savefig('EDA/' + str(col) + '_scatter_plot.png')
+        plt.close() 
+
 # Heatmaps       
 def plot_correlation_heatmap(data, threshold=0.1):
     # Select numerical columns and compute correlation matrix
@@ -301,4 +318,7 @@ def plot_correlation_heatmap(data, threshold=0.1):
     plt.title(f"Filtered Correlation Heatmap (|correlation| >= {threshold})", fontsize=16)
     plt.xticks(rotation=45, ha="right")
     plt.yticks(rotation=0)
-    plt.savefig('heatmap.png')
+    plt.savefig('EDA/heatmap.png')
+    plt.close() 
+
+

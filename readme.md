@@ -69,7 +69,7 @@ The dataset also includes the following categorical features:
    - Numerical anomalies (e.g., negative values in `Delay_from_due_date`) are corrected or removed..
 
 2. **Feature Scaling:**
-   - Numerical features in the dataset are scaled using a combination of `RobustScaler` and `StandardScaler` to ensure effective preprocessing. Columns prone to outliers and skewness, such as `Total_EMI_per_month` and `Monthly_Balance`, are scaled using `RobustScaler`, which centers the data by the median and scales it using the interquartile range (IQR). This approach minimizes the impact of extreme values while retaining valuable data patterns. Other numerical features are scaled using `StandardScaler` to ensure they follow a standard normal distribution (mean = 0, standard deviation = 1).
+   - Numerical features in the dataset are scaled using a combination of `RobustScaler` and `StandardScaler` to ensure effective preprocessing. Columns prone to outliers and skewness, such as `Total_EMI_per_month` and `Monthly_Balance`, are scaled using `RobustScaler`, which centers the data by the median. These financial features often exhibit significant variability, with extreme values skewing the distribution. For instance, while most individuals may have an EMI of $1,000 to $5,000, a few outliers with EMIs exceeding $50,000 could disproportionately influence scaling methods like Min-Max or Z-score scaling. The Robust Scaler, by centering the data around the median and scaling it using the interquartile range (IQR), ensures that the model focuses on the central data distribution rather than being overly influenced by outliers. For example, applying this scaler on `Annual_Income` mitigates the impact of a high-income earner earning $500,000, allowing the data to retain meaningful variations for the majority of observations. This preprocessing step enhances the robustness of downstream machine learning models and statistical analyses. This approach minimizes the impact of extreme values while retaining valuable data patterns. Other numerical features are scaled using `StandardScaler` to ensure they follow a standard normal distribution (mean = 0, standard deviation = 1).
 
     - To apply these scalers efficiently, a `ColumnTransformer` is utilized, allowing different scaling techniques to be applied to specific subsets of features in a single step. Some features in the dataset were highly skewed, which likely contributed to poor silhouette scores during clustering. However, applying `RobustScaler` to these columns proved to be a game-changer, significantly improving the clustering performance and enhancing the overall pipeline.
 
@@ -86,10 +86,7 @@ The dataset also includes the following categorical features:
 1. **k-Means Clustering:**
    - k-Means is applied to identify clusters within the data. This step helps in understanding the grouping of customers based on their features. The Silhouette Score is 0.95.
 
-2. **DBSCAN:**
-   - DBSCAN is used as an alternative clustering method to handle noise and non-linear clusters.
-
-3. **Dimensionality Reduction:**
+   **Visualization:**
    - PCA is applied to reduce the data dimensions to 2D or 3D for clustering visualization.
 
       ![Alt Text](ClusterPlots/pca_clusters_2d.png "Optional Title")
@@ -98,6 +95,12 @@ The dataset also includes the following categorical features:
    - These clusters align with the three credit score categories: Good, Standard, and Poor, indicating that the inherent grouping patterns in the data are closely related to the target variable. 
    - The clear separation of clusters suggests that the preprocessing and clustering steps, such as scaling and dimensionality reduction, were successful. 
    - This validates the clustering algorithm’s ability to capture meaningful distinctions between credit score categories, providing actionable insights for customer segmentation.
+
+2. **Heirarchical Clustering:**
+   - This is used as an alternative clustering method. The Silhouette Score is 0.95.
+   **Visualization:**
+   - PCA is applied to reduce the data dimensions to 2D or 3D for clustering visualization.
+
 
 ### Classification
 1. **Model Selection:**
