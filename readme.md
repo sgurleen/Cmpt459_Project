@@ -159,26 +159,26 @@ The dataset also includes the following categorical features:
 2. **Model Training:**
    - The dataset is split into training (80%) and testing (20%) sets.
    - Cross-validation is performed with 5 folds to evaluate model consistency.
-   **KNN**  
-   Cross-Validation Scores: [0.67934062 0.67433047 0.67578322 0.67540424 0.68064679]
-   **Random Forest**
-   Cross-Validation Scores: [0.81595402 0.81360536 0.80773118 0.81171046 0.81246842]
+   - **KNN**  
+         Cross-Validation Scores: [0.67934062 0.67433047 0.67578322 0.67540424 0.68064679]
+   - **Random Forest**
+         Cross-Validation Scores: [0.81595402 0.81360536 0.80773118 0.81171046 0.81246842]
    - The cross-validation scores demonstrate consistent performance across folds, with an average accuracy of approximately 81.6%, indicating reliable generalization. 
 
 3. **Evaluation Metrics:**
       - **KNN**
-      - **Accuracy**: 0.6811  
-      - **Precision**: 0.6798  
-      - **Recall**: 0.6811  
-      - **F1-Score**: 0.6781  
-      - **AUC-ROC**: 0.8156 
+         - **Accuracy**: 0.6811  
+         - **Precision**: 0.6798  
+         - **Recall**: 0.6811  
+         - **F1-Score**: 0.6781  
+         - **AUC-ROC**: 0.8156 
 
       - **Random Forest**
-      - **Accuracy**: 0.8161  
-      - **Precision**: 0.8165  
-      - **Recall**: 0.8160  
-      - **F1-Score**: 0.8159  
-      - **AUC-ROC**: 0.9140 
+         - **Accuracy**: 0.8161  
+         - **Precision**: 0.8165  
+         - **Recall**: 0.8160  
+         - **F1-Score**: 0.8159  
+         - **AUC-ROC**: 0.9140 
 - The model achieved an accuracy of 81.6%, with precision, recall, and F1-scores closely aligned, reflecting balanced performance. The high AUC-ROC of 91.4% indicates excellent discrimination capability between classes.  
     
     ![Alt Text](Knn/confusion_matrix.png "Optional Title")
