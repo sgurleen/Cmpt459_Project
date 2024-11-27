@@ -65,7 +65,7 @@ The dataset also includes the following categorical features:
 
 ### Exploratory Data Analysis (EDA)
 1. **Visualization of Feature Distributions**
-   -**Histograms:** Histograms were created to show the distributions of significant numerical features. Normal histograms were plotted at first, but log-log scales were used for better representation because of the skewness in the data.
+   - **Histograms:** Histograms were created to show the distributions of significant numerical features. Normal histograms were plotted at first, but log-log scales were used for better representation because of the skewness in the data.
    ![Alt Text](EDA/Outstanding_Debt_histogram.png "Optional Title")
    Outstanding Debt Histogram:
       - The distribution is highly right-skewed, necessitating a log scale for better visualization
@@ -97,19 +97,19 @@ The dataset also includes the following categorical features:
 
    **Strong Positive Correlations**
    Annual Income and Monthly Inhand Salary show perfect correlation (1.0), indicating they are directly proportional
-      -Outstanding Debt and Number of Loans share a moderate positive correlation (~0.58)
-      -Credit History Age and Payment of Minimum Amount show positive correlation (~0.55)
+      - Outstanding Debt and Number of Loans share a moderate positive correlation (~0.58)
+      - Credit History Age and Payment of Minimum Amount show positive correlation (~0.55)
    **Strong Negative Correlations**
    Interest Rate shows negative correlations with multiple variables:
-      -Age (-0.31)
-      -Monthly Balance (-0.25)
-      -Bank Accounts (-0.40)
+      - Age (-0.31)
+      - Monthly Balance (-0.25)
+      - Bank Accounts (-0.40)
    **Key Observatiions:**
-      -Auto, personal, student, and home equity loans all exhibit comparable correlation patterns with one another.
-      -The correlation between the Credit Utilization Ratio and the Credit Mix and the majority of variables is comparatively weak.
-      -The majority of financial variables exhibit moderately negative correlations with age, indicating that younger individuals may exhibit distinct financial patterns.
-      -The strong correlation between Annual Income and Monthly Inhand Salary suggests one of these variables might be redundant for modeling
-      -Several loan-related variables show similar correlation patterns, indicating possible redundancy in loan-type features
+      - Auto, personal, student, and home equity loans all exhibit comparable correlation patterns with one another.
+      - The correlation between the Credit Utilization Ratio and the Credit Mix and the majority of variables is comparatively weak.
+      - The majority of financial variables exhibit moderately negative correlations with age, indicating that younger individuals may exhibit distinct financial patterns.
+      - The strong correlation between Annual Income and Monthly Inhand Salary suggests one of these variables might be redundant for modeling
+      - Several loan-related variables show similar correlation patterns, indicating possible redundancy in loan-type features
 
 ### Feature Engineering, Scaling and Selection
 1. **Feature Engineering:**
