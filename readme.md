@@ -63,6 +63,54 @@ The dataset also includes the following categorical features:
      - One-hot encoding is applied to nominal categorical features such as `Payment_Behaviour`, which we assumed, does not have a natural order. This encoding expands the feature space by creating binary columns for each unique category, allowing the model to treat each category independently.  
     - **Preprocessing of High-Cardinality Features:** For columns like `Type_of_Loan` that contain multiple values separated by commas, the data is split into individual rows or columns before applying encoding. This ensures better representation and avoids inflating the feature space unnecessarily.
 
+### Exploratory Data Analysis (EDA)
+1. **Visualization of Feature Distributions**
+   -**Histograms:** Histograms were created to show the distributions of significant numerical features. Normal histograms were plotted at first, but log-log scales were used for better representation because of the skewness in the data.
+   ![Alt Text](EDA/Outstanding_Debt_histogram.png "Optional Title")
+   Outstanding Debt Histogram:
+      - The distribution is highly right-skewed, necessitating a log scale for better visualization
+      - Multiple peaks are visible, suggesting distinct debt brackets or lending patterns
+      - Highest frequency occurs around 1000-2000 range
+      - Long tail extends to higher debt values, indicating fewer cases of very high debt
+      - Clear multimodal distribution suggests different types of loans or borrower segments
+
+   -**Box plots:** Box plots were created to identify outliers and understand the spread of each feature.
+   ![Alt Text](EDA/Delay_from_due_date_box.png "Optional Title")
+   From Box plot above, Delay from Due Date Boxplot
+      - The median delay is approximately 18 days
+      - There is significant spread in delays, ranging from 0 to about 55 days
+      - Multiple outliers appear above 60 days, indicating some extreme cases of payment delays
+      - The distribution is slightly skewed upward, suggesting more cases of longer delays than shorter ones
+
+   ![Alt Text](EDA/Num_of_Delayed_Payment_box.png "Optional Title")
+   Number of Delayed Payments Boxplot
+      - Extreme outliers are present, with some cases showing over 4000 delayed payments
+      - The median appears to be close to zero, suggesting most customers have few delayed payments
+      - Very compressed box indicates that the majority of customers fall within a narrow range
+      - The distribution is heavily skewed by outliers, which could represent problematic accounts
+
+
+   -**Scatter plots:** Scatter plots were used to visualize individual features against their indices to detect any anomalies or patterns.
+   
+2. **Correlation Analysis:** A correlation matrix was computed to identify relationships between numerical variables such as income, debt, and delayed payments. Only strong correlations (specified threshold of 0.1 as given) were visualized using a heatmap.
+   ![Alt Text](EDA/heatmap.png "Optional Title")
+
+   **Strong Positive Correlations**
+   Annual Income and Monthly Inhand Salary show perfect correlation (1.0), indicating they are directly proportional
+      -Outstanding Debt and Number of Loans share a moderate positive correlation (~0.58)
+      -Credit History Age and Payment of Minimum Amount show positive correlation (~0.55)
+   **Strong Negative Correlations**
+   Interest Rate shows negative correlations with multiple variables:
+      -Age (-0.31)
+      -Monthly Balance (-0.25)
+      -Bank Accounts (-0.40)
+   **Key Observatiions:**
+      -Auto, personal, student, and home equity loans all exhibit comparable correlation patterns with one another.
+      -The correlation between the Credit Utilization Ratio and the Credit Mix and the majority of variables is comparatively weak.
+      -The majority of financial variables exhibit moderately negative correlations with age, indicating that younger individuals may exhibit distinct financial patterns.
+      -The strong correlation between Annual Income and Monthly Inhand Salary suggests one of these variables might be redundant for modeling
+      -Several loan-related variables show similar correlation patterns, indicating possible redundancy in loan-type features
+
 ### Feature Engineering, Scaling and Selection
 1. **Feature Engineering:**
    - Columns such as `Credit_History_Age` are converted from years and months to only months for numerical analysis.
@@ -103,20 +151,35 @@ The dataset also includes the following categorical features:
 
 
 ### Classification
+
 1. **Model Selection:**
    - k-Nearest Neighbors (k-NN) is used for classification due to its simplicity and minimal hyperparameter requirements.
+   - The Random Forest classifier was chosen for its ability to handle high-dimensional data, and effectiveness in capturing complex patterns through ensemble learning.
 
 2. **Model Training:**
    - The dataset is split into training (80%) and testing (20%) sets.
-   - Cross-validation is performed with 5 folds to evaluate model consistency.   
+   - Cross-validation is performed with 5 folds to evaluate model consistency.
+   **KNN**  
    Cross-Validation Scores: [0.67934062 0.67433047 0.67578322 0.67540424 0.68064679]
+   **Random Forest**
+   Cross-Validation Scores: [0.81595402 0.81360536 0.80773118 0.81171046 0.81246842]
+   The cross-validation scores demonstrate consistent performance across folds, with an average accuracy of approximately 81.6%, indicating reliable generalization. 
 
 3. **Evaluation Metrics:**
-    - **Accuracy**: 0.6811  
-    - **Precision**: 0.6798  
-    - **Recall**: 0.6811  
-    - **F1-Score**: 0.6781  
-    - **AUC-ROC**: 0.8156 
+   **KNN**
+      - **Accuracy**: 0.6811  
+      - **Precision**: 0.6798  
+      - **Recall**: 0.6811  
+      - **F1-Score**: 0.6781  
+      - **AUC-ROC**: 0.8156 
+
+   **Random Forest**
+      - **Accuracy**: 0.8161  
+      - **Precision**: 0.8165  
+      - **Recall**: 0.8160  
+      - **F1-Score**: 0.8159  
+      - **AUC-ROC**: 0.9140 
+   The model achieved an accuracy of 81.6%, with precision, recall, and F1-scores closely aligned, reflecting balanced performance. The high AUC-ROC of 91.4% indicates excellent discrimination capability between classes.  
     
     ![Alt Text](Knn/confusion_matrix.png "Optional Title")
 

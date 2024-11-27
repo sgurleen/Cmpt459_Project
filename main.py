@@ -6,6 +6,7 @@ from sklearn.preprocessing import RobustScaler, StandardScaler
 from sklearn.compose import ColumnTransformer
 import eval
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.ensemble import RandomForestClassifier
 import matplotlib.pyplot as plt
 import seaborn as sns
 
@@ -153,7 +154,7 @@ def main():
     ################### Cross-validation ##############################
     cv_scores = eval.perform_cross_validation(knn, X_train, y_train, cv=5)
     print("Cross-Validation Scores:", cv_scores)
-
+    
     knn.fit(X_train, y_train)
     y_pred = knn.predict(X_test)
     y_proba = knn.predict_proba(X_test)
@@ -165,12 +166,52 @@ def main():
     if y_proba is not None:
         eval.plot_multiclass_roc_curve(y_test, y_proba, ["Poor", "Standard", "Good"])
 
+
     ###################### Hyperparameter tuning ######################
     param_grid = {"n_neighbors": [10, 20, 50, 70, 100], "weights": ["uniform", "distance"]}
     grid_search = eval.perform_grid_search(knn, param_grid, X_train, y_train)
     print("Best Parameters:", grid_search.best_params_)
 
     
+    ###################### Random Forest###############################
+    # Split the dataset
+    X_train, X_test, y_train, y_test = utils.split_dataset(X, y)
+
+    # Initialize the Random Forest classifier
+    rf = RandomForestClassifier(n_estimators=100, max_depth=None, random_state=42)
+
+    # Cross-validation
+    cv_scores_rf = eval.perform_cross_validation(rf, X_train, y_train, cv=5)
+    print("Cross-Validation Scores:", cv_scores_rf)
+
+    # Train the model
+    rf.fit(X_train, y_train)
+
+    # Make predictions
+    y_pred_rf = rf.predict(X_test)
+    y_proba_rf = rf.predict_proba(X_test) if hasattr(rf, "predict_proba") else None
+
+    # 6. Evaluate the model
+    metrics_rf = eval.evaluate_model(y_test, y_pred_rf, y_proba_rf)
+    print("Evaluation Metrics:", metrics_rf)
+
+    # Plot confusion matrix
+    eval.plot_confusion_matrix(y_test, y_pred_rf)
+
+    # Plot ROC curve if probabilities are available
+    if y_proba_rf is not None:
+        eval.plot_multiclass_roc_curve(y_test, y_proba_rf, ["Poor", "Standard", "Good"])
+
+    # 7. Hyperparameter tuning
+    param_grid_rf = {
+        "n_estimators": [50, 100, 200],
+        "max_depth": [10, 20, 30, None],
+        "min_samples_split": [2, 5, 10],
+        "min_samples_leaf": [1, 2, 4],
+        "bootstrap": [True, False]
+    }
+    grid_search_rf = eval.perform_grid_search(rf, param_grid_rf, X_train, y_train)
+    print("Best Parameters:", grid_search_rf.best_params_)  
 
 
 main()
