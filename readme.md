@@ -95,16 +95,16 @@ The dataset also includes the following categorical features:
 2. **Correlation Analysis:** A correlation matrix was computed to identify relationships between numerical variables such as income, debt, and delayed payments. Only strong correlations (specified threshold of 0.1 as given) were visualized using a heatmap.
    ![Alt Text](EDA/heatmap.png "Optional Title")
 
-   **Strong Positive Correlations**
+   - **Strong Positive Correlations**
    Annual Income and Monthly Inhand Salary show perfect correlation (1.0), indicating they are directly proportional
       - Outstanding Debt and Number of Loans share a moderate positive correlation (~0.58)
       - Credit History Age and Payment of Minimum Amount show positive correlation (~0.55)
-   **Strong Negative Correlations**
+   - **Strong Negative Correlations**
    Interest Rate shows negative correlations with multiple variables:
       - Age (-0.31)
       - Monthly Balance (-0.25)
       - Bank Accounts (-0.40)
-   **Key Observatiions:**
+   - **Key Observatiions:**
       - Auto, personal, student, and home equity loans all exhibit comparable correlation patterns with one another.
       - The correlation between the Credit Utilization Ratio and the Credit Mix and the majority of variables is comparatively weak.
       - The majority of financial variables exhibit moderately negative correlations with age, indicating that younger individuals may exhibit distinct financial patterns.
