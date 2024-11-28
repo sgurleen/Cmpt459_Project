@@ -1,11 +1,16 @@
 # Credit Score Prediction Project
 
 ## Overview
-This project involves building a machine learning pipeline to predict credit scores for customers using a dataset that includes features such as demographic information, income, loan details, and payment behaviors. The pipeline includes data cleaning, preprocessing, feature engineering, clustering, and classification using k-Nearest Neighbors (k-NN). Hyperparameter tuning and model evaluation are also performed to ensure optimal performance.
 
-## Problem Statement
-The objective is to categorize individuals into predefined credit score categories based on financial and demographic information.
+The Credit Score Prediction Project highlights the implementation of a machine learning pipeline to predict credit scores for customers using a structured dataset. The pipeline incorporates comprehensive data cleaning, preprocessing, feature engineering, clustering, and classification, emphasizing hyperparameter tuning and model evaluation. It aims to transform raw financial and demographic data into actionable insights, aiding stakeholders in assessing creditworthiness efficiently.
 
+---
+
+## Problem Definition
+
+The project addresses the challenge of categorizing individuals into predefined credit score categories (‘Poor,’ ‘Standard,’ ‘Good’) based on their financial and demographic profiles. This involves handling a dataset with missing values, anomalies, and diverse feature types, requiring a robust pipeline to preprocess, augment, and analyze data effectively. The goal is to develop a predictive model that achieves high accuracy while providing interpretable results for stakeholders, ensuring fair and effective credit score assessments.
+
+---
 ## Data
 The data consists of multiple rows per customer ID, representing different months. The dataset contains a mix of numerical and categorical features with missing values and anomalies. The data cleaning and preprocessing steps are critical for handling these challenges. There are 26 features originally.
 
@@ -63,48 +68,59 @@ The dataset also includes the following categorical features:
      - One-hot encoding is applied to nominal categorical features such as `Payment_Behaviour`, which we assumed, does not have a natural order. This encoding expands the feature space by creating binary columns for each unique category, allowing the model to treat each category independently.  
     - **Preprocessing of High-Cardinality Features:** For columns like `Type_of_Loan` that contain multiple values separated by commas, the data is split into individual rows or columns before applying encoding. This ensures better representation and avoids inflating the feature space unnecessarily.
 
+3. **Data Augmentation:**
+- We used SMOTE (Synthetic Minority Oversampling Technique) to handle class imbalance by generating synthetic samples for the minority class.
+- **How It Works**:
+  1. Identifies k-nearest neighbors for minority class samples.
+  2. Creates new synthetic samples by interpolating between a sample and its neighbors.
+- **Impact**: Balances the dataset, ensuring the model doesn't become biased toward the majority class and improving predictive performance.
+
+
+4. **Dimensionality Reduction:**  
+   - We only had 51 features after all the encodings for approx 100k entries which are not very high in number so we did not perform any dimensionality reduction on the dataset itself. However, we did experiment with considering on ly the top features using methods like RFE (explained lated in the report). We used PCA only for visualization purposes (as shown in the following sections).
+
 ### Exploratory Data Analysis (EDA)
 1. **Visualization of Feature Distributions**
    - **Histograms:** Histograms were created to show the distributions of significant numerical features. Normal histograms were plotted at first, but log-log scales were used for better representation because of the skewness in the data.
-   ![Alt Text](EDA/Outstanding_Debt_histogram.png "Optional Title")
-   Outstanding Debt Histogram:
+   ![Alt Text](EDA/Outstanding_Debt_histogram.png "Optional Title")  
+   Outstanding Debt Histogram:  
       - The distribution is highly right-skewed, necessitating a log scale for better visualization
       - Multiple peaks are visible, suggesting distinct debt brackets or lending patterns
       - Highest frequency occurs around 1000-2000 range
       - Long tail extends to higher debt values, indicating fewer cases of very high debt
-      - Clear multimodal distribution suggests different types of loans or borrower segments
+      - Clear multimodal distribution suggests different types of loans or borrower segments  
 
-   -**Box plots:** Box plots were created to identify outliers and understand the spread of each feature.
-   ![Alt Text](EDA/Delay_from_due_date_box.png "Optional Title")
+   -**Box plots:** Box plots were created to identify outliers and understand the spread of each feature.  
+   ![Alt Text](EDA/Delay_from_due_date_box.png "Optional Title")  
    From Box plot above, Delay from Due Date Boxplot
       - The median delay is approximately 18 days
       - There is significant spread in delays, ranging from 0 to about 55 days
       - Multiple outliers appear above 60 days, indicating some extreme cases of payment delays
-      - The distribution is slightly skewed upward, suggesting more cases of longer delays than shorter ones
+      - The distribution is slightly skewed upward, suggesting more cases of longer delays than shorter ones  
 
-   ![Alt Text](EDA/Num_of_Delayed_Payment_box.png "Optional Title")
-   Number of Delayed Payments Boxplot
+   ![Alt Text](EDA/Num_of_Delayed_Payment_box.png "Optional Title")  
+   Number of Delayed Payments Boxplot  
       - Extreme outliers are present, with some cases showing over 4000 delayed payments
       - The median appears to be close to zero, suggesting most customers have few delayed payments
       - Very compressed box indicates that the majority of customers fall within a narrow range
-      - The distribution is heavily skewed by outliers, which could represent problematic accounts
+      - The distribution is heavily skewed by outliers, which could represent problematic accounts  
 
 
-   -**Scatter plots:** Scatter plots were used to visualize individual features against their indices to detect any anomalies or patterns.
+   -**Scatter plots:** Scatter plots were used to visualize individual features against their indices to detect any anomalies or patterns.  
    
-2. **Correlation Analysis:** A correlation matrix was computed to identify relationships between numerical variables such as income, debt, and delayed payments. Only strong correlations (specified threshold of 0.1 as given) were visualized using a heatmap.
-   ![Alt Text](EDA/heatmap.png "Optional Title")
+2. **Correlation Analysis:** A correlation matrix was computed to identify relationships between numerical variables such as income, debt, and delayed payments. Only strong correlations (specified threshold of 0.1 as given) were visualized using a heatmap.  
+   ![Alt Text](EDA/heatmap.png "Optional Title")  
 
-   - **Strong Positive Correlations**
+   **Strong Positive Correlations**  
    Annual Income and Monthly Inhand Salary show perfect correlation (1.0), indicating they are directly proportional
       - Outstanding Debt and Number of Loans share a moderate positive correlation (~0.58)
-      - Credit History Age and Payment of Minimum Amount show positive correlation (~0.55)
-   - **Strong Negative Correlations**
+      - Credit History Age and Payment of Minimum Amount show positive correlation (~0.55)  
+   **Strong Negative Correlations**
    Interest Rate shows negative correlations with multiple variables:
       - Age (-0.31)
       - Monthly Balance (-0.25)
-      - Bank Accounts (-0.40)
-   - **Key Observatiions:**
+      - Bank Accounts (-0.40)  
+   **Key Observatiions:**  
       - Auto, personal, student, and home equity loans all exhibit comparable correlation patterns with one another.
       - The correlation between the Credit Utilization Ratio and the Credit Mix and the majority of variables is comparatively weak.
       - The majority of financial variables exhibit moderately negative correlations with age, indicating that younger individuals may exhibit distinct financial patterns.
@@ -127,12 +143,63 @@ The dataset also includes the following categorical features:
    - Duplicate rows are removed.
    - The total feature space after encoding is 51 which is not too high and all the features are important for our model. As a result, we did not apply any further dimentionally reduction strategies.
 
-4. **Target Encoding:**
+4. **RFE (Recursive Feature Elimination)**
+- **Purpose**: To select the most significant features by iteratively removing the least important ones.
+- **How It Works**:
+  1. Trains a model with all features.
+  2. Calculates feature importance (e.g., weights in linear models).
+  3. Eliminates the least significant feature and retrains the model.
+  4. Repeats until the desired number of features is selected.
+- **Impact**: Reduces model complexity, avoids overfitting, and improves interpretability by focusing only on relevant features.
+
+### Outlier Removal
+1. **EllipticEnvelope**
+- **Purpose**: To detect outliers in a dataset assuming a Gaussian distribution.
+- **How It Works**:
+  1. Fits an elliptical boundary around the majority of data points.
+  2. Flags points lying outside this boundary as outliers.
+- **Impact**: Removes anomalies, leading to cleaner data and better model performance.
+
+### Explanation of the Graphs
+
+#### Graph 1: Outlier Detection in `Interest_Rate` using EllipticEnvelope
+![Outlier Detection in Interest_Rate using EllipticEnvelope](./outlier_plots/Interest_Rate_outliers.png)
+- **Blue Points (Inliers)**: Represent data points classified as normal or within the expected range for the `Interest_Rate` feature.
+- **Red Points (Outliers)**: Indicate data points flagged as anomalies or outliers by the `EllipticEnvelope` algorithm.
+- **Observation**:
+  - Most of the data points form a dense horizontal band, showing a consistent and expected distribution of `Interest_Rate`.
+  - Outliers appear clustered at the higher end of the `Interest_Rate` scale, suggesting unusually high interest rates that deviate significantly from the norm.
+
+---
+
+#### Graph 2: Outlier Detection in `Num_of_Loan` using EllipticEnvelope
+![Outlier Detection in Num_of_Loan using EllipticEnvelope](./outlier_plots/Num_of_Loan_outliers.png)
+- **Blue Points (Inliers)**: Represent normal or typical data points for the `Num_of_Loan` feature.
+- **Red Points (Outliers)**: Highlight anomalies detected by the `EllipticEnvelope` algorithm.
+- **Observation**:
+  - The inliers show a uniform distribution, with distinct clusters corresponding to typical loan numbers (e.g., 2, 4, 6).
+  - Outliers are concentrated at the higher end (around 8), indicating customers with an unusually high number of loans, which are likely deviations from the expected pattern.
+
+---
+
+### General Notes
+- The random jitter on the y-axis (`Density`) is artificial, added to improve visualization and avoid overlapping points.
+- `EllipticEnvelope` assumes a Gaussian distribution of the data and fits an elliptical boundary to identify anomalies.
+- In both graphs, anomalies are concentrated in sparse regions, highlighting deviations from normal behavior.
+- Handling these outliers appropriately (e.g., removal or correction) can improve the quality of the data and enhance model performance.
+- This method provides us with an outlier removal based on the density of the values, however, most of the outliers could actually be a valid value when it comes to the credit reporting. For example: a person can have 1 credit card while another person can actually have 10 credit cards.
+- Apart from this, as we had 8 rows dedicated to each customer, we could actually see if the data samples were outliers or a valid entry from the mode of the value, e=which we processed while cleaning the data.
+
+
+### Target Encoding
    - The target variable `Credit_Score` is mapped to numerical values: `Poor` (0), `Standard` (1), and `Good` (2).
+
+
+---
 
 ### Clustering
 1. **k-Means Clustering:**
-   - k-Means is applied to identify clusters within the data. This step helps in understanding the grouping of customers based on their features. The Silhouette Score is 0.95.
+   - k-Means is applied to identify clusters within the data. This step helps in understanding the grouping of customers based on their features. The **Silhouette Score** is **0.95**.
 
    **Visualization:**
    - PCA is applied to reduce the data dimensions to 2D or 3D for clustering visualization.
@@ -153,7 +220,11 @@ The dataset also includes the following categorical features:
 ### Classification
 
 1. **Model Selection:**
-   - k-Nearest Neighbors (k-NN) is used for classification due to its simplicity and minimal hyperparameter requirements.
+   - We tried 3 different methods:
+      - kNN
+      - Random Forest
+      - AdaBoost
+   - We observed Random Forest to have the best accuracy and area under the ROC curve
    - The Random Forest classifier was chosen for its ability to handle high-dimensional data, and effectiveness in capturing complex patterns through ensemble learning.
 
 2. **Model Training:**
@@ -171,7 +242,14 @@ The dataset also includes the following categorical features:
          - **Precision**: 0.6798  
          - **Recall**: 0.6811  
          - **F1-Score**: 0.6781  
-         - **AUC-ROC**: 0.8156 
+         - **AUC-ROC**: 0.8156
+
+      - **AdaBoost**
+         - **Accuracy**: 0.6496  
+         - **Precision**: 0.6539  
+         - **Recall**: 0.6496  
+         - **F1-Score**: 0.6498  
+         - **AUC-ROC**: 0.7787  
 
       - **Random Forest**
          - **Accuracy**: 0.8161  
@@ -179,23 +257,128 @@ The dataset also includes the following categorical features:
          - **Recall**: 0.8160  
          - **F1-Score**: 0.8159  
          - **AUC-ROC**: 0.9140 
+         
 - The model achieved an accuracy of 81.6%, with precision, recall, and F1-scores closely aligned, reflecting balanced performance. The high AUC-ROC of 91.4% indicates excellent discrimination capability between classes.  
+
+**Best Model**: Random Forest with SMOTE class balancing  
+         - **Accuracy**: 0.8514  
+         - **Precision**: 0.8509  
+         - **Recall**: 0.8514  
+         - **F1-Score**: 0.8511  
+         - **AUC-ROC**: 0.9497
+
+# Model Comparison
+
+The table below summarizes the evaluation metrics for different models and preprocessing techniques.
+
+| Model                                 | Accuracy   | Precision  | Recall     | F1-Score   | AUC-ROC    |
+|---------------------------------------|------------|------------|------------|------------|------------|
+| **AdaBoost**                          | 0.6497     | 0.6539     | 0.6497     | 0.6499     | 0.7788     |
+| **k-Nearest Neighbors (KNN)**         | 0.6807     | 0.6794     | 0.6807     | 0.6778     | 0.8153     |
+| **Random Forest (RF)**                |            |            |            |            |            |
+| - SMOTE + Feature Selection (Top 10)  | 0.8348     | 0.8346     | 0.8348     | 0.8347     | 0.9417     |
+| - Only SMOTE                          | **0.8515**     | **0.8510**     | **0.8515**     | **0.8511**     | **0.9497**     |
+| - SMOTE + Feature Selection (Top 20)  | 0.8513     | 0.8508     | 0.8513     | 0.8510     | 0.9480     |
+| - Without SMOTE                       | 0.8161     | 0.8166     | 0.8161     | 0.8160     | 0.9141     |
+| - With Outlier Removal                | 0.8159     | 0.8164     | 0.8159     | 0.8158     | 0.9135     |
+
+
+
+### Cross Validation Score
+![Alt Text](./util_plots/cross_validation.png "Optional Title")
+
+## Analysis of the Confusion Matrix and ROC curve
+
+### KNN
+
+#### Confusion Matrix
+
     
-    ![Alt Text](Knn/confusion_matrix.png "Optional Title")
+   ![Alt Text](Knn/confusion_matrix.png "Optional Title")
 
-    The confusion matrix for the k-Nearest Neighbors (k-NN) model reveals that the classifier performs well for classifying samples in class 1, with 8124 correctly predicted, indicating strong performance for this majority class. However, there are notable misclassifications for classes 0 and 2, which are often misclassified as class 1 (e.g., 1851 samples from class 0 and 1602 from class 2 were predicted as class 1). This suggests that the model struggles to distinguish between these classes, potentially due to overlapping feature distributions or class imbalance in the dataset. While k-NN effectively identifies the dominant patterns in class 1, the confusion in distinguishing 0 and 2 highlights the need for better feature representation, scaling adjustments, or potential weighting strategies to improve the model's performance for minority or less distinct classes.
+   The confusion matrix for the k-Nearest Neighbors (k-NN) model reveals that the classifier performs well for classifying samples in class 1, with 8124 correctly predicted, indicating strong performance for this majority class. However, there are notable misclassifications for classes 0 and 2, which are often misclassified as class 1 (e.g., 1851 samples from class 0 and 1602 from class 2 were predicted as class 1). This suggests that the model struggles to distinguish between these classes, potentially due to overlapping feature distributions or class imbalance in the dataset. While k-NN effectively identifies the dominant patterns in class 1, the confusion in distinguishing 0 and 2 highlights the need for better feature representation, scaling adjustments, or potential weighting strategies to improve the model's performance for minority or less distinct classes.
 
-    ![Alt Text](Knn/roc_curve.png "Optional Title")
+#### Multiclass ROC Curve
+   ![Alt Text](Knn/roc_curve.png "Optional Title")
 
-    The Multiclass ROC curve provides an evaluation of the k-Nearest Neighbors (k-NN) model's performance for each credit score category: Poor, Standard, and Good. The AUC values for each class indicate the model's ability to distinguish that class from the others. The curve shows that the model performs best for the Good class with an AUC of 0.88, followed by the Poor class with an AUC of 0.85, while the Standard class has the lowest AUC of 0.78. This suggests that the model is more effective at identifying customers with "Good" or "Poor" credit scores compared to "Standard." The "Standard" class overlaps more with the others, as indicated by its relatively lower AUC. The overall trend of the ROC curves and the high AUC values for "Good" and "Poor" indicate that the k-NN model captures distinctions in these classes well, though improvements are needed to enhance its performance for the "Standard" class.
+   The Multiclass ROC curve provides an evaluation of the k-Nearest Neighbors (k-NN) model's performance for each credit score category: Poor, Standard, and Good. The AUC values for each class indicate the model's ability to distinguish that class from the others. The curve shows that the model performs best for the Good class with an AUC of 0.88, followed by the Poor class with an AUC of 0.85, while the Standard class has the lowest AUC of 0.78. This suggests that the model is more effective at identifying customers with "Good" or "Poor" credit scores compared to "Standard." The "Standard" class overlaps more with the others, as indicated by its relatively lower AUC. The overall trend of the ROC curves and the high AUC values for "Good" and "Poor" indicate that the k-NN model captures distinctions in these classes well, though improvements are needed to enhance its performance for the "Standard" class.
+
+### Random Forest
+
+#### Confusion Matrix
+
+![Alt Text](RF/confusion_matrix.png "Optional Title")  
+The confusion matrix demonstrates the classifier's performance across three classes: 0, 1, and 2. Key insights include:
+
+**Class 0:**  
+- Most samples (9085) are correctly classified.  
+- 926 samples are misclassified as class 1 and 473 as class 2.  
+- The majority of errors involve predicting class 1.
+
+**Class 1:**  
+- 8327 samples are accurately identified.  
+- Significant misclassifications are observed: 1301 samples from class 0 and 856 from class 2 are wrongly labeled as class 1.
+
+**Class 2:**  
+- Strong performance is shown with 9368 correctly predicted instances.  
+- 980 samples are misclassified as class 1, and 136 as class 0.
+
+This pattern suggests that the model is most effective at distinguishing **class 2**, but it faces challenges when differentiating between **classes 0 and 1**, possibly due to feature similarity or imbalance in the dataset.
+
+---
+
+#### Multiclass ROC Curve  
+
+   ![Alt Text](RF/roc_curve.png "Optional Title")  
+   The Multiclass ROC curve evaluates the model's ability to classify samples across three categories:
+
+   **Class Poor (AUC = 0.96):**  
+   - Strong performance, indicating the model's high sensitivity and specificity in recognizing this class.
+
+   **Class Standard (AUC = 0.92):**  
+   - While still robust, this class shows relatively lower performance compared to others, suggesting some overlap with adjacent categories.
+
+   **Class Good (AUC = 0.97):**  
+   - The highest AUC, reflecting the model's strong predictive ability for this class.
+
+   The model's ROC curves suggest that it excels in distinguishing the **Good** class from others, while the **Standard** class has the greatest overlap, leading to slightly reduced predictive accuracy. This highlights the need for targeted feature engineering or hyperparameter tuning to enhance separation for this category.
+
+---
+
 
 ### Hyperparameter Tuning
 1. **Grid Search:**
    - Hyperparameters for k-NN, such as `n_neighbors` and `weights`, are tuned using Grid Search to identify the optimal configuration.
 
 2. **Results:**
-   - The best parameters are printed along with the performance metrics for the optimal model.  
-   Best Parameters: {'n_neighbors': 10, 'weights': 'distance'}
+   - **k-NN:**
+
+      The table below highlights the best parameters selected for the k-NN model during hyperparameter tuning:
+
+      | Hyperparameter   | Value       |
+      |------------------|-------------|
+      | **n_neighbors**  | 10          |
+      | **weights**      | distance    |
+
+      These parameters were selected to optimize the model's performance based on cross-validation and evaluation metrics.
+  
+
+   - **Random Forest**
+      | Hyperparameter       | Value   |
+      |----------------------|---------|
+      | **n_estimators**     | 200     |
+      | **max_depth**        | None    |
+      | **min_samples_split**| 2       |
+      | **min_samples_leaf** | 1       |
+
+3. **Comparison Before vs After**
+
+
+| Model Variant          | Accuracy   | Precision  | Recall     | F1-Score   | AUC-ROC    |
+|------------------------|------------|------------|------------|------------|------------|
+| After Tuning           | **0.8533**| **0.8528** | **0.8533** | **0.8529** | **0.9509** |
+| Before Tuning          | **0.8515**| **0.8510** | **0.8515** | **0.8511** | **0.9497** |
+
 
 ## Key Functions
 1. **Data Cleaning:**
@@ -221,5 +404,37 @@ The dataset also includes the following categorical features:
    - `plot_pca_clusters_2D`: Visualizes PCA clusters in 2D.
    - `plot_pca_clusters_3D`: Visualizes PCA clusters in 3D.
 
+5. **Evaluation:**
+   - `perform_cross_validation`: Utilizes cross-validation to ensure consistent model performance across folds.
+   - `evaluate_model`: Computes metrics such as Accuracy, Precision, Recall, F1-Score, and AUC-ROC to assess model effectiveness. The function supports both binary and multiclass evaluation by handling weighted averages and one-vs-rest (OvR) strategies.
+   - `plot_confusion_matrix`: Generates a confusion matrix to identify areas of misclassification, providing visual insight into model errors.
+   - `plot_multiclass_roc_curve`: Creates multiclass ROC curves to evaluate model performance for each class and computes AUC for comparison.
+   - `perform_grid_search`: Conducts hyperparameter optimization using Grid Search to enhance model accuracy and robustness.
+
+
+## Insights into the Domain
+
+1. **Customer Financial Behavior:** Features such as credit utilization ratios, payment delays, and loan details reveal patterns in financial behavior, crucial for determining creditworthiness.
+   - Observations like highly skewed outstanding debt and delays suggest distinct borrower segments.
+   - Strong correlations between ‘Annual Income’ and ‘Monthly Inhand Salary’ indicate potential redundancy in feature space.
+
+2. **Credit Risk Patterns:** Clustering methods identified distinct customer groups aligning with credit scores, validating the inherent segmentation in financial data.
+   - Multimodal distributions (e.g., in debt and delayed payments) underscore varying risk profiles across individuals.
+
+3. **Outliers:** Extreme values in features like ‘Num_of_Loan’ and ‘Interest_Rate’ highlight anomalies potentially linked to atypical credit behaviors.
+
+---
+
+## Lessons Learned About Data Mining Methodology
+
+1. **Preprocessing Complexity:** Effective handling of missing values, anomalies, and high-cardinality features is critical. Group-specific imputation and robust scaling significantly improved data quality and model performance.
+2. **Class Imbalance:** Addressing imbalance through SMOTE ensured fair representation across credit score categories, enhancing predictive accuracy.
+3. **Model Selection and Evaluation:** Experimentation with multiple classifiers (kNN, Random Forest, AdaBoost) revealed the importance of ensemble methods like Random Forest for capturing complex patterns. Consistent cross-validation scores ensured reliability.
+4. **Feature Importance:** Recursive Feature Elimination (RFE) and correlation analysis demonstrated the significance of feature selection in reducing redundancy and improving interpretability.
+
+---
+
 ## Conclusion
-This pipeline automates the prediction of credit scores by preprocessing raw customer data, applying clustering, and building a classification model. With robust cleaning and preprocessing steps, combined with advanced visualization and tuning techniques, this system provides actionable insights into customer creditworthiness.
+
+The project effectively demonstrates how to preprocess and analyze financial data to predict credit scores, achieving high accuracy with Random Forest classifiers. Insights into customer segmentation and financial behaviors underscore the potential for data-driven decision-making in credit risk management. The methodology—from robust data cleaning to advanced evaluation metrics—provides a blueprint for tackling similar predictive analytics tasks, highlighting the role of comprehensive preprocessing and balanced classification in achieving meaningful outcomes.
+

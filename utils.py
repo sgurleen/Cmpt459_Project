@@ -2,6 +2,45 @@ import re
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.neighbors import NearestNeighbors
+from sklearn.ensemble import IsolationForest
+from sklearn.neighbors import LocalOutlierFactor
+from sklearn.covariance import EllipticEnvelope
+from pandas.api.types import is_numeric_dtype
+
+def plot_k_distance_graph(data, k):
+    """
+    Plot the k-distance graph for a given dataset.
+    
+    Parameters:
+    - data: array-like, shape (n_samples, n_features)
+      The input data for clustering.
+    - k: int
+      The number of nearest neighbors to consider.
+    """
+    # Fit the Nearest Neighbors model
+    nbrs = NearestNeighbors(n_neighbors=k).fit(data)
+    
+    # Compute the distances to the k-th nearest neighbor for each point
+    distances, indices = nbrs.kneighbors(data)
+    
+    # Take the distances to the k-th nearest neighbor
+    k_distances = distances[:, k-1]
+    
+    # Sort the distances in ascending order
+    k_distances = np.sort(k_distances)
+    
+    # Plot the k-distance graph
+    plt.figure(figsize=(10, 6))
+    plt.plot(k_distances)
+    plt.title(f'K-Distance Graph (k = {k})')
+    plt.xlabel('Data Points (sorted)')
+    plt.ylabel(f'Distance to {k}-th Nearest Neighbor')
+    plt.grid(True)
+    plt.show()
+
 
 def convert_to_months(data, feature):
     
@@ -96,7 +135,108 @@ def apply_transformation(data, numerical_columns):
     return log_transformed_data
 
 def pick_first_row_every_8(array):
-    return array[::8]
+    """
+    Selects the first row from every group of 8 rows in a DataFrame.
+
+    Parameters:
+    df (pd.DataFrame): The input DataFrame.
+
+    Returns:
+    pd.DataFrame: A DataFrame with the first row from every group of 8 rows.
+    """
+    return array#[::8]
 
 def split_dataset(X, y, test_size=0.2, random_state=42):
+    """
+    Splits the dataset into training and testing sets.
+
+    Parameters:
+    X (np.ndarray or pd.DataFrame): Features.
+    y (np.ndarray or pd.Series): Labels.
+    test_size (float): Proportion of the dataset to include in the test split.
+    random_state (int): Random seed for reproducibility.
+
+    Returns:
+    tuple: X_train, X_test, y_train, y_test
+    """
     return train_test_split(X, y, test_size=test_size, random_state=random_state)
+
+
+def detect_outliers_per_column_and_save_plots(df, method="isolation_forest", contamination=0.05, output_dir="outlier_plots"):
+    """
+    Detects outliers for each column in the DataFrame and saves scatter plots for visualization.
+    
+    Parameters:
+        df (pd.DataFrame): The input DataFrame.
+        method (str): Outlier detection method ('isolation_forest', 'lof', 'elliptic_envelope').
+        contamination (float): The proportion of outliers in the data.
+        output_dir (str): Directory where plots will be saved.
+        
+    Returns:
+        dict: A dictionary where keys are column names and values are DataFrames with outliers removed for that column.
+    """
+    import os
+
+    # Create the output directory if it doesn't exist
+    if output_dir is not None:
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+    
+    # Initialize a dictionary to store cleaned DataFrames
+    cleaned_dfs = {}
+    
+    # Iterate through each column
+    for column in df.columns:
+
+        if df[column].dtype == bool:
+            print(f"Skipping non-numeric column: {column}")
+            continue
+        
+        data = df[[column]].values  # Extract single column as 2D array
+        
+        # Select the method
+        if method == "isolation_forest":
+            model = IsolationForest(contamination=contamination, random_state=42)
+        elif method == "lof":
+            model = LocalOutlierFactor(n_neighbors=20, contamination=contamination, novelty=True)
+        elif method == "elliptic_envelope":
+            model = EllipticEnvelope(contamination=contamination, support_fraction=1.0, random_state=42)
+        else:
+            raise ValueError("Invalid method. Choose from 'isolation_forest', 'lof', or 'elliptic_envelope'.")
+        
+        # Fit the model and predict outliers
+        if method == "lof":
+            model.fit(data)
+            y_pred = model.predict(data)
+        else:
+            model.fit(data)
+            y_pred = model.predict(data)
+        
+        # Mark inliers (1) and outliers (-1)
+        df["Outlier"] = y_pred
+        
+        if output_dir is not None:
+            # Save the scatter plot
+            plt.figure(figsize=(10, 6))
+            plt.scatter(df[df["Outlier"] == 1][column], 
+                        np.random.normal(0, 0.02, len(df[df["Outlier"] == 1])), 
+                        color="blue", label="Inliers", alpha=0.7)
+            plt.scatter(df[df["Outlier"] == -1][column], 
+                        np.random.normal(0, 0.02, len(df[df["Outlier"] == -1])), 
+                        color="red", label="Outliers", alpha=0.7)
+            plt.title(f"Outlier Detection in {column} using LOF")
+            plt.xlabel(column)
+            plt.ylabel("Density (random jitter)")
+            plt.legend()
+            plt.grid(True)
+            
+            # Save the plot
+            plot_path = os.path.join(output_dir, f"{column}_outliers.png")
+            plt.savefig(plot_path)
+            plt.close()
+        
+        # Save the cleaned DataFrame for this column
+        cleaned_dfs[column] = df[df["Outlier"] == 1].drop(columns=["Outlier"])
+        df = df.drop(columns=["Outlier"])
+    
+    return cleaned_dfs
